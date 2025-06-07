@@ -56,4 +56,14 @@ public interface DryRateConfig extends Config
 	{
 		return true;
 	}
+
+	@ConfigItem(
+		keyName = "teamDropResets",
+		name = "Team drops reset streaks",
+		description = "Reset your dry streak when anyone in your team gets a unique (not just you)"
+	)
+	default boolean teamDropResets()
+	{
+		return false;
+	}
 } 

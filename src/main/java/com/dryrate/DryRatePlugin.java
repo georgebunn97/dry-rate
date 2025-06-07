@@ -14,7 +14,6 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
-import net.runelite.client.util.ImageUtil;
 
 import java.awt.image.BufferedImage;
 import java.util.regex.Pattern;
@@ -50,10 +49,15 @@ public class DryRatePlugin extends Plugin
 	private static final Pattern TOA_COMPLETION = Pattern.compile(".*[Tt]ombs of [Aa]mascut.*count.*?(\\d+).*");
 	private static final Pattern COX_COMPLETION = Pattern.compile(".*[Cc]hambers of [Xx]eric.*count.*?(\\d+).*");
 
-	// Unique drop patterns for raids - case insensitive and more flexible
-	private static final Pattern TOB_UNIQUE = Pattern.compile("(?i).*(scythe of vitur|ghrazi rapier|sanguinesti staff|justiciar faceguard|justiciar chestguard|justiciar legguards|avernic defender hilt).*");
-	private static final Pattern TOA_UNIQUE = Pattern.compile("(?i).*(tumeken's shadow|elidinis' ward|masori mask|masori body|masori chaps|lightbearer|osmumten's fang).*");
-	private static final Pattern COX_UNIQUE = Pattern.compile("(?i).*(twisted bow|elder maul|kodai insignia|dragon hunter crossbow|dinhs bulwark|ancestral hat|ancestral robe top|ancestral robe bottom|dragon claws|twisted buckler).*");
+	// Personal unique drop patterns (when you get the drop)
+	private static final Pattern TOB_UNIQUE_PERSONAL = Pattern.compile("(?i).*you.*received.*(scythe of vitur|ghrazi rapier|sanguinesti staff|justiciar faceguard|justiciar chestguard|justiciar legguards|avernic defender hilt|sanguine ornament kit|holy ornament kit|sanguine dust).*");
+	private static final Pattern TOA_UNIQUE_PERSONAL = Pattern.compile("(?i).*you.*received.*(tumeken's shadow|elidinis' ward|masori mask|masori body|masori chaps|lightbearer|osmumten's fang).*");
+	private static final Pattern COX_UNIQUE_PERSONAL = Pattern.compile("(?i).*you.*received.*(twisted bow|elder maul|kodai insignia|dragon hunter crossbow|dinhs bulwark|ancestral hat|ancestral robe top|ancestral robe bottom|dragon claws|twisted buckler|twisted ancestral colour kit|metamorphic dust).*");
+
+	// Team unique drop patterns (when anyone gets the drop)
+	private static final Pattern TOB_UNIQUE_TEAM = Pattern.compile("(?i).*(scythe of vitur|ghrazi rapier|sanguinesti staff|justiciar faceguard|justiciar chestguard|justiciar legguards|avernic defender hilt|sanguine ornament kit|holy ornament kit|sanguine dust).*");
+	private static final Pattern TOA_UNIQUE_TEAM = Pattern.compile("(?i).*(tumeken's shadow|elidinis' ward|masori mask|masori body|masori chaps|lightbearer|osmumten's fang).*");
+	private static final Pattern COX_UNIQUE_TEAM = Pattern.compile("(?i).*(twisted bow|elder maul|kodai insignia|dragon hunter crossbow|dinhs bulwark|ancestral hat|ancestral robe top|ancestral robe bottom|dragon claws|twisted buckler|twisted ancestral colour kit|metamorphic dust).*");
 
 	@Override
 	protected void startUp() throws Exception
@@ -65,14 +69,29 @@ public class DryRatePlugin extends Plugin
 		
 		// Create the panel
 		panel = new DryRatePanel(dryRateManager);
+		log.info("Panel created successfully");
 		
-		// Load icon for the sidebar
-		BufferedImage icon = ImageUtil.loadImageResource(getClass(), "/icon.png");
-		if (icon == null)
-		{
-			// Fallback if icon doesn't exist
-			icon = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
-		}
+		// Create a simple chart/tally icon representing streak tracking
+		BufferedImage icon = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+		java.awt.Graphics2D g2d = icon.createGraphics();
+		g2d.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+		
+		// Draw a simple bar chart representing streak tracking
+		g2d.setColor(new java.awt.Color(100, 100, 100)); // Dark gray background
+		g2d.fillRect(1, 1, 14, 14);
+		
+		// Draw chart bars of different heights (representing streaks)
+		g2d.setColor(new java.awt.Color(255, 100, 100)); // Red bars (dry streaks)
+		g2d.fillRect(3, 10, 2, 4);   // Short bar
+		g2d.fillRect(6, 7, 2, 7);    // Medium bar  
+		g2d.fillRect(9, 4, 2, 10);   // Tall bar
+		g2d.fillRect(12, 8, 2, 6);   // Medium bar
+		
+		// Add a small border
+		g2d.setColor(java.awt.Color.WHITE);
+		g2d.drawRect(1, 1, 14, 14);
+		
+		g2d.dispose();
 		
 		navButton = NavigationButton.builder()
 			.tooltip("Dry Rate Tracker")
@@ -82,6 +101,7 @@ public class DryRatePlugin extends Plugin
 			.build();
 		
 		clientToolbar.addNavigation(navButton);
+		log.info("Navigation button added to toolbar");
 	}
 
 	@Override
@@ -128,17 +148,34 @@ public class DryRatePlugin extends Plugin
 		}
 		
 		// Check for unique drops - these should reset the dry streak
-		if (TOB_UNIQUE.matcher(cleanMessage).matches())
+		// First check for personal drops (always reset)
+		if (TOB_UNIQUE_PERSONAL.matcher(cleanMessage).matches())
 		{
-			handleUniqueDropReceived(RaidType.TOB, cleanMessage);
+			handleUniqueDropReceived(RaidType.TOB, cleanMessage, true);
 		}
-		else if (TOA_UNIQUE.matcher(cleanMessage).matches())
+		else if (TOA_UNIQUE_PERSONAL.matcher(cleanMessage).matches())
 		{
-			handleUniqueDropReceived(RaidType.TOA, cleanMessage);
+			handleUniqueDropReceived(RaidType.TOA, cleanMessage, true);
 		}
-		else if (COX_UNIQUE.matcher(cleanMessage).matches())
+		else if (COX_UNIQUE_PERSONAL.matcher(cleanMessage).matches())
 		{
-			handleUniqueDropReceived(RaidType.COX, cleanMessage);
+			handleUniqueDropReceived(RaidType.COX, cleanMessage, true);
+		}
+		// Then check for team drops (only reset if config enabled)
+		else if (config.teamDropResets())
+		{
+			if (TOB_UNIQUE_TEAM.matcher(cleanMessage).matches())
+			{
+				handleUniqueDropReceived(RaidType.TOB, cleanMessage, false);
+			}
+			else if (TOA_UNIQUE_TEAM.matcher(cleanMessage).matches())
+			{
+				handleUniqueDropReceived(RaidType.TOA, cleanMessage, false);
+			}
+			else if (COX_UNIQUE_TEAM.matcher(cleanMessage).matches())
+			{
+				handleUniqueDropReceived(RaidType.COX, cleanMessage, false);
+			}
 		}
 	}
 
@@ -157,9 +194,16 @@ public class DryRatePlugin extends Plugin
 		}
 	}
 
-	private void handleUniqueDropReceived(RaidType raidType, String message)
+	private void handleUniqueDropReceived(RaidType raidType, String message, boolean isPersonalDrop)
 	{
-		log.info("Unique drop detected: {} - {}", raidType, message);
+		if (isPersonalDrop)
+		{
+			log.info("Personal unique drop detected: {} - {}", raidType, message);
+		}
+		else
+		{
+			log.info("Team unique drop detected: {} - {}", raidType, message);
+		}
 		
 		// Reset the dry streak for this raid type
 		dryRateManager.handleUniqueDropReceived(raidType);

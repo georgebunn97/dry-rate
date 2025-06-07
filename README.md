@@ -24,7 +24,7 @@ The plugin monitors your chat messages for:
 **Theatre of Blood:**
 - Scythe of vitur, Ghrazi rapier, Sanguinesti staff
 - Justiciar faceguard, Justiciar chestguard, Justiciar legguards
-- Avernic defender hilt
+- Avernic defender hilt, Sanguine ornament kit, Holy ornament kit, Sanguine dust
 
 **Tombs of Amascut:**
 - Tumeken's shadow, Elidinis' ward
@@ -35,7 +35,7 @@ The plugin monitors your chat messages for:
 - Twisted bow, Elder maul, Kodai insignia
 - Dragon hunter crossbow, Dinhs bulwark
 - Ancestral hat, Ancestral robe top, Ancestral robe bottom
-- Dragon claws, Twisted buckler
+- Dragon claws, Twisted buckler, Twisted ancestral colour kit, Metamorphic dust
 
 ## Usage
 
