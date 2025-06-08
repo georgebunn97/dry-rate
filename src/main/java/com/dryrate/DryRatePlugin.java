@@ -44,10 +44,10 @@ public class DryRatePlugin extends Plugin
 	private DryRatePanel panel;
 	private NavigationButton navButton;
 
-	// Raid completion patterns - more flexible to handle variations
-	private static final Pattern TOB_COMPLETION = Pattern.compile(".*[Tt]heatre of [Bb]lood.*count.*?(\\d+).*");
-	private static final Pattern TOA_COMPLETION = Pattern.compile(".*[Tt]ombs of [Aa]mascut.*count.*?(\\d+).*");
-	private static final Pattern COX_COMPLETION = Pattern.compile(".*[Cc]hambers of [Xx]eric.*count.*?(\\d+).*");
+	// Raid completion patterns - very specific to avoid false positives
+	private static final Pattern TOB_COMPLETION = Pattern.compile("^Your completed Theatre of Blood count is: (\\d+)\\.$");
+	private static final Pattern TOA_COMPLETION = Pattern.compile("^Your completed Tombs of Amascut count is: (\\d+)\\.$");
+	private static final Pattern COX_COMPLETION = Pattern.compile("^Your completed Chambers of Xeric count is: (\\d+)\\.$");
 
 	// Personal unique drop patterns (when you get the drop)
 	private static final Pattern TOB_UNIQUE_PERSONAL = Pattern.compile("(?i).*you.*received.*(scythe of vitur|ghrazi rapier|sanguinesti staff|justiciar faceguard|justiciar chestguard|justiciar legguards|avernic defender hilt|sanguine ornament kit|holy ornament kit|sanguine dust).*");
