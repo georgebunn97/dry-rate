@@ -86,7 +86,7 @@ public class DryRateManager
     }
 
     /**
-     * Handle a raid completion (increment dry streak if no unique received)
+     * Handle a raid completion (increment dry streak and total count)
      */
     public void handleRaidCompletion(RaidType raidType)
     {
@@ -98,14 +98,16 @@ public class DryRateManager
         DryRateData data = raidData.get(raidType);
         if (data != null)
         {
+            // Increment dry streak directly on each completion
             data.incrementDryStreak();
-            log.info("Incremented dry streak for {}: {}", raidType, data.getCurrentDryStreak());
+            log.info("Raid completion for {}: Dry streak now {}, total completions {}", 
+                raidType, data.getCurrentDryStreak(), data.getTotalCompletions());
             saveData();
         }
     }
 
     /**
-     * Handle receiving a unique drop (reset dry streak)
+     * Handle receiving a personal unique drop (reset dry streak and increment unique count)
      */
     public void handleUniqueDropReceived(RaidType raidType)
     {
@@ -118,9 +120,49 @@ public class DryRateManager
         if (data != null)
         {
             int previousStreak = data.getCurrentDryStreak();
+            
+            // Reset dry streak (this handles history and unique count)
             data.resetDryStreak();
-            log.info("Reset dry streak for {} after {} completions", raidType, previousStreak);
+            
+            log.info("Personal unique drop for {}: Reset streak from {}, total uniques now {}", 
+                raidType, previousStreak, data.getTotalUniques());
             saveData();
+        }
+    }
+
+    /**
+     * Handle team member receiving unique drop (only reset if config enabled)
+     */
+    public void handleTeamUniqueDropReceived(RaidType raidType)
+    {
+        if (!isRaidTrackingEnabled(raidType))
+        {
+            return;
+        }
+
+        // Only reset dry streak if team drops are configured to reset personal streak
+        if (config != null && config.teamDropResets())
+        {
+            DryRateData data = raidData.get(raidType);
+            if (data != null)
+            {
+                int previousStreak = data.getCurrentDryStreak();
+                
+                // Reset dry streak but don't increment personal unique count
+                if (previousStreak > 0)
+                {
+                    data.getPreviousDryStreaks().add(previousStreak);
+                }
+                data.setCurrentDryStreak(0);
+                
+                log.info("Team unique drop for {}: Reset streak from {} (team drops reset enabled)", 
+                    raidType, previousStreak);
+                saveData();
+            }
+        }
+        else
+        {
+            log.info("Team unique drop for {} ignored (team drops reset disabled)", raidType);
         }
     }
 
@@ -163,6 +205,8 @@ public class DryRateManager
         log.info("Reset all data for {}", raidType);
         saveData();
     }
+
+
 
     /**
      * Check if tracking is enabled for a specific raid type

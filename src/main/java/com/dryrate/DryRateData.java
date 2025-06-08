@@ -75,7 +75,7 @@ public class DryRateData
         this.lastDropTime = lastDropTime;
     }
 
-    // Helper methods
+    // Helper methods for dry streak tracking
     public void incrementDryStreak()
     {
         this.currentDryStreak++;
@@ -84,13 +84,15 @@ public class DryRateData
 
     public void resetDryStreak()
     {
+        // Add to history if we had a streak > 0
         if (currentDryStreak > 0)
         {
             previousDryStreaks.add(currentDryStreak);
         }
+        
+        // Reset streak to 0 and increment uniques
         this.currentDryStreak = 0;
         this.totalUniques++;
-        this.totalCompletions++;
         this.lastDropTime = System.currentTimeMillis();
     }
 

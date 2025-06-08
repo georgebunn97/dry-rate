@@ -156,31 +156,28 @@ public class DryRatePlugin extends Plugin
 		// First check for personal drops (always reset)
 		if (TOB_UNIQUE_PERSONAL.matcher(cleanMessage).matches())
 		{
-			handleUniqueDropReceived(RaidType.TOB, cleanMessage, true);
+			handlePersonalUniqueDropReceived(RaidType.TOB, cleanMessage);
 		}
 		else if (TOA_UNIQUE_PERSONAL.matcher(cleanMessage).matches())
 		{
-			handleUniqueDropReceived(RaidType.TOA, cleanMessage, true);
+			handlePersonalUniqueDropReceived(RaidType.TOA, cleanMessage);
 		}
 		else if (COX_UNIQUE_PERSONAL.matcher(cleanMessage).matches())
 		{
-			handleUniqueDropReceived(RaidType.COX, cleanMessage, true);
+			handlePersonalUniqueDropReceived(RaidType.COX, cleanMessage);
 		}
-		// Then check for team drops (only reset if config enabled)
-		else if (config.teamDropResets())
+		// Then check for team drops (only if not already personal and if different from personal patterns)
+		else if (TOB_UNIQUE_TEAM.matcher(cleanMessage).matches() && !TOB_UNIQUE_PERSONAL.matcher(cleanMessage).matches())
 		{
-			if (TOB_UNIQUE_TEAM.matcher(cleanMessage).matches())
-			{
-				handleUniqueDropReceived(RaidType.TOB, cleanMessage, false);
-			}
-			else if (TOA_UNIQUE_TEAM.matcher(cleanMessage).matches())
-			{
-				handleUniqueDropReceived(RaidType.TOA, cleanMessage, false);
-			}
-			else if (COX_UNIQUE_TEAM.matcher(cleanMessage).matches())
-			{
-				handleUniqueDropReceived(RaidType.COX, cleanMessage, false);
-			}
+			handleTeamUniqueDropReceived(RaidType.TOB, cleanMessage);
+		}
+		else if (TOA_UNIQUE_TEAM.matcher(cleanMessage).matches() && !TOA_UNIQUE_PERSONAL.matcher(cleanMessage).matches())
+		{
+			handleTeamUniqueDropReceived(RaidType.TOA, cleanMessage);
+		}
+		else if (COX_UNIQUE_TEAM.matcher(cleanMessage).matches() && !COX_UNIQUE_PERSONAL.matcher(cleanMessage).matches())
+		{
+			handleTeamUniqueDropReceived(RaidType.COX, cleanMessage);
 		}
 	}
 
@@ -188,8 +185,7 @@ public class DryRatePlugin extends Plugin
 	{
 		log.info("Raid completion detected: {} - {}", raidType, message);
 		
-		// Check if this is a dry completion (no unique received)
-		// We'll track this after a short delay to see if a unique drop message follows
+		// Track the completion
 		dryRateManager.handleRaidCompletion(raidType);
 		
 		// Update the panel
@@ -199,19 +195,26 @@ public class DryRatePlugin extends Plugin
 		}
 	}
 
-	private void handleUniqueDropReceived(RaidType raidType, String message, boolean isPersonalDrop)
+	private void handlePersonalUniqueDropReceived(RaidType raidType, String message)
 	{
-		if (isPersonalDrop)
-		{
-			log.info("Personal unique drop detected: {} - {}", raidType, message);
-		}
-		else
-		{
-			log.info("Team unique drop detected: {} - {}", raidType, message);
-		}
+		log.info("Personal unique drop detected: {} - {}", raidType, message);
 		
-		// Reset the dry streak for this raid type
+		// Handle the unique drop
 		dryRateManager.handleUniqueDropReceived(raidType);
+		
+		// Update the panel
+		if (panel != null)
+		{
+			panel.updateDisplay();
+		}
+	}
+
+	private void handleTeamUniqueDropReceived(RaidType raidType, String message)
+	{
+		log.info("Team unique drop detected: {} - {}", raidType, message);
+		
+		// Handle the team unique drop (may or may not reset based on config)
+		dryRateManager.handleTeamUniqueDropReceived(raidType);
 		
 		// Update the panel
 		if (panel != null)
