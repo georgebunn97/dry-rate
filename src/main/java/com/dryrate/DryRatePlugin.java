@@ -71,25 +71,30 @@ public class DryRatePlugin extends Plugin
 		panel = new DryRatePanel(dryRateManager);
 		log.info("Panel created successfully");
 		
-		// Create a simple chart/tally icon representing streak tracking
+		// Create a towel icon (perfect for "dry" tracker!)
 		BufferedImage icon = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
 		java.awt.Graphics2D g2d = icon.createGraphics();
 		g2d.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
 		
-		// Draw a simple bar chart representing streak tracking
-		g2d.setColor(new java.awt.Color(100, 100, 100)); // Dark gray background
-		g2d.fillRect(1, 1, 14, 14);
+		// Draw towel main body (light blue/white towel)
+		g2d.setColor(new java.awt.Color(200, 220, 255)); // Light blue towel
+		g2d.fillRect(3, 2, 10, 12);
 		
-		// Draw chart bars of different heights (representing streaks)
-		g2d.setColor(new java.awt.Color(255, 100, 100)); // Red bars (dry streaks)
-		g2d.fillRect(3, 10, 2, 4);   // Short bar
-		g2d.fillRect(6, 7, 2, 7);    // Medium bar  
-		g2d.fillRect(9, 4, 2, 10);   // Tall bar
-		g2d.fillRect(12, 8, 2, 6);   // Medium bar
+		// Add towel texture lines (horizontal stripes)
+		g2d.setColor(new java.awt.Color(180, 200, 240)); // Slightly darker blue
+		g2d.drawLine(4, 4, 11, 4);   // Top stripe
+		g2d.drawLine(4, 6, 11, 6);   // Second stripe
+		g2d.drawLine(4, 8, 11, 8);   // Third stripe
+		g2d.drawLine(4, 10, 11, 10); // Fourth stripe
+		g2d.drawLine(4, 12, 11, 12); // Bottom stripe
 		
-		// Add a small border
-		g2d.setColor(java.awt.Color.WHITE);
-		g2d.drawRect(1, 1, 14, 14);
+		// Add towel edges/border for definition
+		g2d.setColor(new java.awt.Color(150, 170, 200)); // Darker border
+		g2d.drawRect(3, 2, 10, 12);
+		
+		// Add a small "hanging" effect at the top
+		g2d.setColor(new java.awt.Color(100, 100, 100)); // Dark gray hook/hanger
+		g2d.fillRect(7, 0, 2, 3);
 		
 		g2d.dispose();
 		
