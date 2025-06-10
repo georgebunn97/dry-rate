@@ -1,5 +1,6 @@
 package com.dryrate;
 
+import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.PluginPanel;
 
@@ -14,6 +15,7 @@ import java.util.Map;
 /**
  * Panel that displays dry streak information for all raids
  */
+@Slf4j
 public class DryRatePanel extends PluginPanel
 {
     private final DryRateManager dryRateManager;
@@ -31,10 +33,10 @@ public class DryRatePanel extends PluginPanel
         setBackground(ColorScheme.DARK_GRAY_COLOR);
         setLayout(new BorderLayout());
         
-        System.out.println("DryRatePanel: Initializing panel...");
+        log.debug("Initializing panel");
         initializeComponents();
         updateDisplay();
-        System.out.println("DryRatePanel: Panel initialization complete");
+        log.debug("Panel initialization complete");
     }
 
     private void initializeComponents()
