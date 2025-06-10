@@ -30,10 +30,11 @@ public class DryRateManager
     private final Map<RaidType, DryRateData> raidData;
     private final Gson gson;
 
-    public DryRateManager()
+    @Inject
+    public DryRateManager(Gson gson)
     {
         this.raidData = new EnumMap<>(RaidType.class);
-        this.gson = new Gson();
+        this.gson = gson;
         
         // Initialize data for each raid type
         for (RaidType raidType : RaidType.values())
