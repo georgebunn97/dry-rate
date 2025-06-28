@@ -62,14 +62,14 @@ public class DryRatePlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		log.info("Dry Rate Tracker started!");
+		log.debug("Dry Rate Tracker started!");
 		
 		// Initialize the dry rate manager
 		dryRateManager.loadData();
 		
 		// Create the panel
 		panel = new DryRatePanel(dryRateManager);
-		log.info("Panel created successfully");
+		log.debug("Panel created successfully");
 		
 		// Create a towel icon (perfect for "dry" tracker!)
 		BufferedImage icon = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
@@ -106,13 +106,13 @@ public class DryRatePlugin extends Plugin
 			.build();
 		
 		clientToolbar.addNavigation(navButton);
-		log.info("Navigation button added to toolbar");
+		log.debug("Navigation button added to toolbar");
 	}
 
 	@Override
 	protected void shutDown() throws Exception
 	{
-		log.info("Dry Rate Tracker stopped!");
+		log.debug("Dry Rate Tracker stopped!");
 		
 		// Save data before shutting down
 		dryRateManager.saveData();
@@ -183,7 +183,7 @@ public class DryRatePlugin extends Plugin
 
 	private void handleRaidCompletion(RaidType raidType, String message)
 	{
-		log.info("Raid completion detected: {} - {}", raidType, message);
+		log.debug("Raid completion detected: {} - {}", raidType, message);
 		
 		// Track the completion
 		dryRateManager.handleRaidCompletion(raidType);
@@ -197,7 +197,7 @@ public class DryRatePlugin extends Plugin
 
 	private void handlePersonalUniqueDropReceived(RaidType raidType, String message)
 	{
-		log.info("Personal unique drop detected: {} - {}", raidType, message);
+		log.debug("Personal unique drop detected: {} - {}", raidType, message);
 		
 		// Handle the unique drop
 		dryRateManager.handleUniqueDropReceived(raidType);
@@ -211,7 +211,7 @@ public class DryRatePlugin extends Plugin
 
 	private void handleTeamUniqueDropReceived(RaidType raidType, String message)
 	{
-		log.info("Team unique drop detected: {} - {}", raidType, message);
+		log.debug("Team unique drop detected: {} - {}", raidType, message);
 		
 		// Handle the team unique drop (may or may not reset based on config)
 		dryRateManager.handleTeamUniqueDropReceived(raidType);

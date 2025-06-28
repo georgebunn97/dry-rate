@@ -1,11 +1,13 @@
 package com.dryrate;
 
+import lombok.Data;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Data class to store dry streak information for a specific raid type
  */
+@Data
 public class DryRateData
 {
     private int currentDryStreak;
@@ -21,58 +23,6 @@ public class DryRateData
         this.totalUniques = 0;
         this.previousDryStreaks = new ArrayList<>();
         this.lastDropTime = 0;
-    }
-
-    // Getters
-    public int getCurrentDryStreak()
-    {
-        return currentDryStreak;
-    }
-
-    public int getTotalCompletions()
-    {
-        return totalCompletions;
-    }
-
-    public int getTotalUniques()
-    {
-        return totalUniques;
-    }
-
-    public List<Integer> getPreviousDryStreaks()
-    {
-        return new ArrayList<>(previousDryStreaks);
-    }
-
-    public long getLastDropTime()
-    {
-        return lastDropTime;
-    }
-
-    // Setters
-    public void setCurrentDryStreak(int currentDryStreak)
-    {
-        this.currentDryStreak = currentDryStreak;
-    }
-
-    public void setTotalCompletions(int totalCompletions)
-    {
-        this.totalCompletions = totalCompletions;
-    }
-
-    public void setTotalUniques(int totalUniques)
-    {
-        this.totalUniques = totalUniques;
-    }
-
-    public void setPreviousDryStreaks(List<Integer> previousDryStreaks)
-    {
-        this.previousDryStreaks = new ArrayList<>(previousDryStreaks);
-    }
-
-    public void setLastDropTime(long lastDropTime)
-    {
-        this.lastDropTime = lastDropTime;
     }
 
     // Helper methods for dry streak tracking

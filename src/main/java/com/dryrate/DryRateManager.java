@@ -21,18 +21,16 @@ public class DryRateManager
     private static final String CONFIG_GROUP = "dryrate";
     private static final String DATA_KEY = "data";
 
-    @Inject
-    private DryRateConfig config;
-
-    @Inject
-    private ConfigManager configManager;
-
+    private final DryRateConfig config;
+    private final ConfigManager configManager;
     private final Map<RaidType, DryRateData> raidData;
     private final Gson gson;
 
     @Inject
-    public DryRateManager(Gson gson)
+    public DryRateManager(DryRateConfig config, ConfigManager configManager, Gson gson)
     {
+        this.config = config;
+        this.configManager = configManager;
         this.raidData = new EnumMap<>(RaidType.class);
         this.gson = gson;
         
@@ -61,7 +59,7 @@ public class DryRateManager
                     raidData.putAll(loadedData);
                 }
             }
-            log.info("Dry rate data loaded successfully");
+            log.debug("Dry rate data loaded successfully");
         }
         catch (Exception e)
         {
@@ -78,7 +76,7 @@ public class DryRateManager
         {
             String dataJson = gson.toJson(raidData);
             configManager.setConfiguration(CONFIG_GROUP, DATA_KEY, dataJson);
-            log.info("Dry rate data saved successfully");
+            log.debug("Dry rate data saved successfully");
         }
         catch (Exception e)
         {
@@ -101,7 +99,7 @@ public class DryRateManager
         {
             // Increment dry streak directly on each completion
             data.incrementDryStreak();
-            log.info("Raid completion for {}: Dry streak now {}, total completions {}", 
+            log.debug("Raid completion for {}: Dry streak now {}, total completions {}", 
                 raidType, data.getCurrentDryStreak(), data.getTotalCompletions());
             saveData();
         }
@@ -125,7 +123,7 @@ public class DryRateManager
             // Reset dry streak (this handles history and unique count)
             data.resetDryStreak();
             
-            log.info("Personal unique drop for {}: Reset streak from {}, total uniques now {}", 
+            log.debug("Personal unique drop for {}: Reset streak from {}, total uniques now {}", 
                 raidType, previousStreak, data.getTotalUniques());
             saveData();
         }
@@ -156,14 +154,14 @@ public class DryRateManager
                 }
                 data.setCurrentDryStreak(0);
                 
-                log.info("Team unique drop for {}: Reset streak from {} (team drops reset enabled)", 
+                log.debug("Team unique drop for {}: Reset streak from {} (team drops reset enabled)", 
                     raidType, previousStreak);
                 saveData();
             }
         }
         else
         {
-            log.info("Team unique drop for {} ignored (team drops reset disabled)", raidType);
+            log.debug("Team unique drop for {} ignored (team drops reset disabled)", raidType);
         }
     }
 
@@ -192,7 +190,7 @@ public class DryRateManager
         if (data != null)
         {
             data.setCurrentDryStreak(0);
-            log.info("Manually reset dry streak for {}", raidType);
+            log.debug("Manually reset dry streak for {}", raidType);
             saveData();
         }
     }
@@ -203,11 +201,9 @@ public class DryRateManager
     public void resetAllData(RaidType raidType)
     {
         raidData.put(raidType, new DryRateData());
-        log.info("Reset all data for {}", raidType);
+        log.debug("Reset all data for {}", raidType);
         saveData();
     }
-
-
 
     /**
      * Check if tracking is enabled for a specific raid type
