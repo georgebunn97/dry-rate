@@ -27,12 +27,12 @@ public class DryRateManager
     private final Gson gson;
 
     @Inject
-    public DryRateManager(DryRateConfig config, ConfigManager configManager, Gson gson)
+    public DryRateManager(DryRateConfig config, ConfigManager configManager)
     {
         this.config = config;
         this.configManager = configManager;
         this.raidData = new EnumMap<>(RaidType.class);
-        this.gson = gson;
+        this.gson = new Gson(); // Create our own Gson instance
         
         // Initialize data for each raid type
         for (RaidType raidType : RaidType.values())
@@ -49,21 +49,56 @@ public class DryRateManager
         try
         {
             String dataJson = configManager.getConfiguration(CONFIG_GROUP, DATA_KEY);
+            log.debug("*** LOADING DATA *** Raw JSON from config: {}", dataJson);
+            
             if (dataJson != null && !dataJson.isEmpty())
             {
-                Type type = new TypeToken<Map<RaidType, DryRateData>>(){}.getType();
-                Map<RaidType, DryRateData> loadedData = gson.fromJson(dataJson, type);
+                // Use String keys to avoid enum serialization issues
+                Type type = new TypeToken<Map<String, DryRateData>>(){}.getType();
+                Map<String, DryRateData> loadedData = gson.fromJson(dataJson, type);
                 
                 if (loadedData != null)
                 {
-                    raidData.putAll(loadedData);
+                    log.info("Dry rate data loaded successfully - {} raid types", loadedData.size());
+                    
+                    // Convert string keys back to enum keys
+                    for (Map.Entry<String, DryRateData> entry : loadedData.entrySet())
+                    {
+                        try
+                        {
+                            RaidType raidType = RaidType.valueOf(entry.getKey());
+                            DryRateData data = entry.getValue();
+                            raidData.put(raidType, data);
+                            
+                            log.debug("*** {} DATA *** Streak: {}, Completions: {}, Uniques: {}", 
+                                raidType, data.getCurrentDryStreak(), data.getTotalCompletions(), data.getTotalUniques());
+                        }
+                        catch (IllegalArgumentException e)
+                        {
+                            log.warn("*** LOAD WARNING *** Unknown raid type: {}", entry.getKey());
+                        }
+                    }
+                }
+                else
+                {
+                    log.warn("*** LOAD WARNING *** Parsed data was null");
                 }
             }
-            log.debug("Dry rate data loaded successfully");
+            else
+            {
+                log.info("No existing dry rate data found, starting fresh");
+            }
+            log.debug("*** LOAD COMPLETE *** Current raid data state:");
+            for (Map.Entry<RaidType, DryRateData> entry : raidData.entrySet())
+            {
+                DryRateData data = entry.getValue();
+                log.debug("*** {} CURRENT *** Streak: {}, Completions: {}, Uniques: {}", 
+                    entry.getKey(), data.getCurrentDryStreak(), data.getTotalCompletions(), data.getTotalUniques());
+            }
         }
         catch (Exception e)
         {
-            log.error("Error loading dry rate data", e);
+            log.error("*** LOAD ERROR *** Error loading dry rate data", e);
         }
     }
 
@@ -74,13 +109,30 @@ public class DryRateManager
     {
         try
         {
-            String dataJson = gson.toJson(raidData);
+            log.debug("*** SAVING DATA *** Current state before save:");
+            for (Map.Entry<RaidType, DryRateData> entry : raidData.entrySet())
+            {
+                DryRateData data = entry.getValue();
+                log.debug("*** {} SAVE *** Streak: {}, Completions: {}, Uniques: {}", 
+                    entry.getKey(), data.getCurrentDryStreak(), data.getTotalCompletions(), data.getTotalUniques());
+            }
+            
+            // Convert enum keys to strings to avoid serialization issues
+            Map<String, DryRateData> stringKeyMap = new java.util.HashMap<>();
+            for (Map.Entry<RaidType, DryRateData> entry : raidData.entrySet())
+            {
+                stringKeyMap.put(entry.getKey().name(), entry.getValue());
+            }
+            
+            String dataJson = gson.toJson(stringKeyMap);
+            log.debug("*** SAVING DATA *** JSON to save: {}", dataJson);
+            
             configManager.setConfiguration(CONFIG_GROUP, DATA_KEY, dataJson);
-            log.debug("Dry rate data saved successfully");
+            log.debug("*** SAVE COMPLETE *** Data saved successfully to config group: {}, key: {}", CONFIG_GROUP, DATA_KEY);
         }
         catch (Exception e)
         {
-            log.error("Error saving dry rate data", e);
+            log.error("*** SAVE ERROR *** Error saving dry rate data", e);
         }
     }
 
@@ -204,6 +256,35 @@ public class DryRateManager
         raidData.put(raidType, new DryRateData());
         log.debug("Reset all data for {}", raidType);
         saveData();
+    }
+
+    /**
+     * Test method to manually test save/load functionality
+     */
+    public void testSaveLoad()
+    {
+        log.info("*** TESTING SAVE/LOAD *** Starting test");
+        
+        // Set some test data
+        DryRateData testData = raidData.get(RaidType.TOB);
+        testData.incrementDryStreak();
+        testData.incrementDryStreak();
+        testData.incrementDryStreak();
+        
+        log.info("*** TEST *** Set ToB dry streak to: {}", testData.getCurrentDryStreak());
+        
+        // Save the data
+        saveData();
+        
+        // Clear the data
+        raidData.put(RaidType.TOB, new DryRateData());
+        log.info("*** TEST *** Cleared ToB data, streak now: {}", raidData.get(RaidType.TOB).getCurrentDryStreak());
+        
+        // Load the data back
+        loadData();
+        
+        log.info("*** TEST *** After reload, ToB streak is: {}", raidData.get(RaidType.TOB).getCurrentDryStreak());
+        log.info("*** TESTING SAVE/LOAD *** Test complete");
     }
 
     /**
