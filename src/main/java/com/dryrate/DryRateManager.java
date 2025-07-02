@@ -27,12 +27,12 @@ public class DryRateManager
     private final Gson gson;
 
     @Inject
-    public DryRateManager(DryRateConfig config, ConfigManager configManager)
+    public DryRateManager(DryRateConfig config, ConfigManager configManager, Gson gson)
     {
         this.config = config;
         this.configManager = configManager;
         this.raidData = new EnumMap<>(RaidType.class);
-        this.gson = new Gson(); // Create our own Gson instance
+        this.gson = gson; // Use injected Gson from RuneLite
         
         // Initialize data for each raid type
         for (RaidType raidType : RaidType.values())
