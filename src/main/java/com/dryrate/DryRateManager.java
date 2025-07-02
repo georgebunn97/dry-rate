@@ -106,7 +106,8 @@ public class DryRateManager
     }
 
     /**
-     * Handle receiving a personal unique drop (reset dry streak and increment unique count)
+     * Handle receiving a unique drop (reset dry streak and increment unique count)
+     * This is typically called manually when the user confirms they received a unique drop
      */
     public void handleUniqueDropReceived(RaidType raidType)
     {
@@ -123,7 +124,7 @@ public class DryRateManager
             // Reset dry streak (this handles history and unique count)
             data.resetDryStreak();
             
-            log.debug("Personal unique drop for {}: Reset streak from {}, total uniques now {}", 
+            log.debug("Unique drop for {}: Reset streak from {}, total uniques now {}", 
                 raidType, previousStreak, data.getTotalUniques());
             saveData();
         }
