@@ -59,7 +59,7 @@ public class DryRateManager
                 
                 if (loadedData != null)
                 {
-                    log.info("Dry rate data loaded successfully - {} raid types", loadedData.size());
+                    		log.debug("Dry rate data loaded successfully - {} raid types", loadedData.size());
                     
                     // Convert string keys back to enum keys
                     for (Map.Entry<String, DryRateData> entry : loadedData.entrySet())
@@ -86,7 +86,7 @@ public class DryRateManager
             }
             else
             {
-                log.info("No existing dry rate data found, starting fresh");
+                		log.debug("No existing dry rate data found, starting fresh");
             }
             log.debug("*** LOAD COMPLETE *** Current raid data state:");
             for (Map.Entry<RaidType, DryRateData> entry : raidData.entrySet())
@@ -263,7 +263,7 @@ public class DryRateManager
      */
     public void testSaveLoad()
     {
-        log.info("*** TESTING SAVE/LOAD *** Starting test");
+        log.debug("*** TESTING SAVE/LOAD *** Starting test");
         
         // Set some test data
         DryRateData testData = raidData.get(RaidType.TOB);
@@ -271,20 +271,87 @@ public class DryRateManager
         testData.incrementDryStreak();
         testData.incrementDryStreak();
         
-        log.info("*** TEST *** Set ToB dry streak to: {}", testData.getCurrentDryStreak());
+        log.debug("*** TEST *** Set ToB dry streak to: {}", testData.getCurrentDryStreak());
         
         // Save the data
         saveData();
         
         // Clear the data
         raidData.put(RaidType.TOB, new DryRateData());
-        log.info("*** TEST *** Cleared ToB data, streak now: {}", raidData.get(RaidType.TOB).getCurrentDryStreak());
+        log.debug("*** TEST *** Cleared ToB data, streak now: {}", raidData.get(RaidType.TOB).getCurrentDryStreak());
         
         // Load the data back
         loadData();
         
-        log.info("*** TEST *** After reload, ToB streak is: {}", raidData.get(RaidType.TOB).getCurrentDryStreak());
-        log.info("*** TESTING SAVE/LOAD *** Test complete");
+        log.debug("*** TEST *** After reload, ToB streak is: {}", raidData.get(RaidType.TOB).getCurrentDryStreak());
+        log.debug("*** TESTING SAVE/LOAD *** Test complete");
+    }
+
+    /**
+     * Test method to simulate a raid completion without unique
+     */
+    public void testRaidCompletion(RaidType raidType)
+    {
+        log.debug("*** TEST COMPLETION *** Simulating {} completion", raidType);
+        handleRaidCompletion(raidType);
+        
+        DryRateData data = raidData.get(raidType);
+        log.debug("*** TEST RESULT *** {}: Streak={}, Completions={}, Uniques={}", 
+            raidType, data.getCurrentDryStreak(), data.getTotalCompletions(), data.getTotalUniques());
+    }
+
+    /**
+     * Test method to simulate receiving a unique drop
+     * This simulates the complete process: raid completion + unique drop
+     */
+    public void testUniqueReceived(RaidType raidType)
+    {
+        log.debug("*** TEST UNIQUE *** Simulating {} completion with unique drop", raidType);
+        
+        // First handle the raid completion (increments dry streak and completions)
+        handleRaidCompletion(raidType);
+        
+        // Then handle the unique drop (resets dry streak, increments uniques)
+        handleUniqueDropReceived(raidType);
+        
+        DryRateData data = raidData.get(raidType);
+        log.debug("*** TEST RESULT *** {}: Streak={}, Completions={}, Uniques={}", 
+            raidType, data.getCurrentDryStreak(), data.getTotalCompletions(), data.getTotalUniques());
+    }
+
+    /**
+     * Test method to simulate multiple completions for testing averages
+     */
+    public void testMultipleCompletions(RaidType raidType, int completions, int uniques)
+    {
+        log.debug("*** TEST BULK *** Simulating {} completions with {} uniques for {}", 
+            completions, uniques, raidType);
+        
+        if (uniques > completions)
+        {
+            log.warn("Cannot have more uniques ({}) than completions ({}), adjusting uniques to {}", 
+                uniques, completions, completions);
+            uniques = completions;
+        }
+        
+        // Add regular completions (without uniques)
+        int regularCompletions = completions - uniques;
+        for (int i = 0; i < regularCompletions; i++)
+        {
+            handleRaidCompletion(raidType);
+        }
+        
+        // Add completions with uniques (each unique counts as both completion + unique)
+        for (int i = 0; i < uniques; i++)
+        {
+            handleRaidCompletion(raidType); // Completion part
+            handleUniqueDropReceived(raidType); // Unique part
+        }
+        
+        DryRateData data = raidData.get(raidType);
+        log.debug("*** TEST RESULT *** {}: Streak={}, Completions={}, Uniques={}, AvgDry={:.1f}", 
+            raidType, data.getCurrentDryStreak(), data.getTotalCompletions(), 
+            data.getTotalUniques(), data.getOverallAverageDryStreak());
     }
 
     /**

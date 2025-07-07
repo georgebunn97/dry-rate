@@ -19,15 +19,17 @@ import java.util.Map;
 public class DryRatePanel extends PluginPanel
 {
     private final DryRateManager dryRateManager;
+    private final DryRateConfig config;
     private final DecimalFormat decimalFormat;
     
     // UI Components
     private JPanel mainPanel;
     private Map<RaidType, JPanel> raidPanels;
 
-    public DryRatePanel(DryRateManager dryRateManager)
+    public DryRatePanel(DryRateManager dryRateManager, DryRateConfig config)
     {
         this.dryRateManager = dryRateManager;
+        this.config = config;
         this.decimalFormat = new DecimalFormat("#.#");
         
         setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -169,6 +171,15 @@ public class DryRatePanel extends PluginPanel
         });
     }
 
+    /**
+     * Force refresh the display (useful for testing config changes)
+     */
+    public void forceRefresh()
+    {
+        log.debug("Force refreshing panel display");
+        updateDisplay();
+    }
+
     private JPanel createUpdatedRaidPanel(RaidType raidType)
     {
         DryRateData data = dryRateManager.getRaidData(raidType);
@@ -210,7 +221,7 @@ public class DryRatePanel extends PluginPanel
 
         panel.add(Box.createVerticalStrut(6));
 
-        // Statistics on two lines
+        // Statistics on three lines
         JLabel stats1Label = new JLabel("Completions: " + data.getTotalCompletions() + " | Uniques: " + data.getTotalUniques());
         stats1Label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
         stats1Label.setFont(new Font("SansSerif", Font.PLAIN, 12));
@@ -222,18 +233,33 @@ public class DryRatePanel extends PluginPanel
         stats2Label.setFont(new Font("SansSerif", Font.PLAIN, 12));
         stats2Label.setAlignmentX(Component.CENTER_ALIGNMENT);
         panel.add(stats2Label);
+        
+        // Average dry streak
+        double avgDry = data.getOverallAverageDryStreak();
+        String avgText = avgDry == 0.0 ? "Average dry: N/A" : 
+                        String.format("Average dry: %.1f", avgDry);
+        JLabel stats3Label = new JLabel(avgText);
+        stats3Label.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
+        stats3Label.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        stats3Label.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.add(stats3Label);
 
         panel.add(Box.createVerticalStrut(6));
 
-        // Reset button
+        // Reset buttons panel
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
+        buttonPanel.setBackground(bgColor);
+        
+        // Manual Reset button (resets dry streak only)
         JButton resetButton = new JButton("Manual Reset");
-        resetButton.setPreferredSize(new Dimension(130, 26));
-        resetButton.setMaximumSize(new Dimension(130, 26));
+        resetButton.setPreferredSize(new Dimension(130, 24));
+        resetButton.setMaximumSize(new Dimension(130, 24));
         resetButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         resetButton.setBackground(ColorScheme.DARKER_GRAY_HOVER_COLOR);
         resetButton.setForeground(Color.WHITE);
         resetButton.setFocusPainted(false);
-        resetButton.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        resetButton.setFont(new Font("SansSerif", Font.PLAIN, 11));
         
         resetButton.addActionListener(new ActionListener()
         {
@@ -249,13 +275,116 @@ public class DryRatePanel extends PluginPanel
                 
                 if (result == JOptionPane.YES_OPTION)
                 {
-                    dryRateManager.handleUniqueDropReceived(raidType);
+                    dryRateManager.resetDryStreak(raidType);
                     updateDisplay();
                 }
             }
         });
         
-        panel.add(resetButton);
+        // Full Reset button (resets everything)
+        JButton fullResetButton = new JButton("Full Reset");
+        fullResetButton.setPreferredSize(new Dimension(130, 24));
+        fullResetButton.setMaximumSize(new Dimension(130, 24));
+        fullResetButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        fullResetButton.setBackground(new Color(180, 50, 50)); // Red background for destructive action
+        fullResetButton.setForeground(Color.WHITE);
+        fullResetButton.setFocusPainted(false);
+        fullResetButton.setFont(new Font("SansSerif", Font.BOLD, 11));
+        
+        fullResetButton.addActionListener(new ActionListener()
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                int result = JOptionPane.showConfirmDialog(
+                    DryRatePanel.this,
+                    "Reset ALL data for " + raidType.getShortName() + "?\n" +
+                    "This will reset:\n" +
+                    "• Current dry streak\n" +
+                    "• Total completions\n" +
+                    "• Total uniques\n" +
+                    "• Longest dry streak\n\n" +
+                    "This action cannot be undone!",
+                    "Confirm Full Reset",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE
+                );
+                
+                if (result == JOptionPane.YES_OPTION)
+                {
+                    dryRateManager.resetAllData(raidType);
+                    updateDisplay();
+                }
+            }
+        });
+        
+        buttonPanel.add(resetButton);
+        buttonPanel.add(Box.createVerticalStrut(3));
+        buttonPanel.add(fullResetButton);
+        
+        panel.add(buttonPanel);
+        
+        // Test buttons panel (for development/testing) - only show if config enabled
+        if (config != null && config.showTestButtons())
+        {
+            JPanel testPanel = new JPanel();
+            testPanel.setLayout(new BoxLayout(testPanel, BoxLayout.Y_AXIS));
+            testPanel.setBackground(bgColor);
+        
+        // Test completion button
+        JButton testCompletionButton = new JButton("Test Completion");
+        testCompletionButton.setPreferredSize(new Dimension(130, 20));
+        testCompletionButton.setMaximumSize(new Dimension(130, 20));
+        testCompletionButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        testCompletionButton.setBackground(new Color(50, 150, 50)); // Green
+        testCompletionButton.setForeground(Color.WHITE);
+        testCompletionButton.setFocusPainted(false);
+        testCompletionButton.setFont(new Font("SansSerif", Font.PLAIN, 10));
+        
+        testCompletionButton.addActionListener(e -> {
+            dryRateManager.testRaidCompletion(raidType);
+            updateDisplay();
+        });
+        
+        // Test unique button
+        JButton testUniqueButton = new JButton("Test Unique");
+        testUniqueButton.setPreferredSize(new Dimension(130, 20));
+        testUniqueButton.setMaximumSize(new Dimension(130, 20));
+        testUniqueButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        testUniqueButton.setBackground(new Color(150, 50, 150)); // Purple
+        testUniqueButton.setForeground(Color.WHITE);
+        testUniqueButton.setFocusPainted(false);
+        testUniqueButton.setFont(new Font("SansSerif", Font.PLAIN, 10));
+        
+        testUniqueButton.addActionListener(e -> {
+            dryRateManager.testUniqueReceived(raidType);
+            updateDisplay();
+        });
+        
+        // Test bulk button
+        JButton testBulkButton = new JButton("Test 50+5");
+        testBulkButton.setPreferredSize(new Dimension(130, 20));
+        testBulkButton.setMaximumSize(new Dimension(130, 20));
+        testBulkButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        testBulkButton.setBackground(new Color(50, 100, 150)); // Blue
+        testBulkButton.setForeground(Color.WHITE);
+        testBulkButton.setFocusPainted(false);
+        testBulkButton.setFont(new Font("SansSerif", Font.PLAIN, 10));
+        
+        testBulkButton.addActionListener(e -> {
+            dryRateManager.testMultipleCompletions(raidType, 50, 5);
+            updateDisplay();
+        });
+        
+            testPanel.add(Box.createVerticalStrut(3));
+            testPanel.add(testCompletionButton);
+            testPanel.add(Box.createVerticalStrut(2));
+            testPanel.add(testUniqueButton);
+            testPanel.add(Box.createVerticalStrut(2));
+            testPanel.add(testBulkButton);
+            
+            panel.add(testPanel);
+        }
 
         return panel;
     }

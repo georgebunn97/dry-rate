@@ -73,4 +73,18 @@ public class DryRateData
         }
         return (double) total / previousDryStreaks.size();
     }
+
+    /**
+     * Calculate overall average dry streak based on total completions / total uniques
+     * This gives you the average number of raids per unique drop
+     */
+    public double getOverallAverageDryStreak()
+    {
+        if (totalUniques == 0)
+        {
+            return 0.0;
+        }
+        
+        return (double) totalCompletions / totalUniques;
+    }
 } 
