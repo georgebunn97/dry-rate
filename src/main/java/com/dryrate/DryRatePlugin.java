@@ -26,6 +26,7 @@ import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
+import net.runelite.client.util.ImageUtil;
 
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
@@ -86,32 +87,22 @@ public class DryRatePlugin extends Plugin
 		panel = new DryRatePanel(dryRateManager, config);
 		log.debug("Panel created successfully");
 		
-		// Create a towel icon (perfect for "dry" tracker!)
-		BufferedImage icon = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
-		java.awt.Graphics2D g2d = icon.createGraphics();
-		g2d.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
-		
-		// Draw towel main body (light blue/white towel)
-		g2d.setColor(new java.awt.Color(200, 220, 255)); // Light blue towel
-		g2d.fillRect(3, 2, 10, 12);
-		
-		// Add towel texture lines (horizontal stripes)
-		g2d.setColor(new java.awt.Color(180, 200, 240)); // Slightly darker blue
-		g2d.drawLine(4, 4, 11, 4);   // Top stripe
-		g2d.drawLine(4, 6, 11, 6);   // Second stripe
-		g2d.drawLine(4, 8, 11, 8);   // Third stripe
-		g2d.drawLine(4, 10, 11, 10); // Fourth stripe
-		g2d.drawLine(4, 12, 11, 12); // Bottom stripe
-		
-		// Add towel edges/border for definition
-		g2d.setColor(new java.awt.Color(150, 170, 200)); // Darker border
-		g2d.drawRect(3, 2, 10, 12);
-		
-		// Add a small "hanging" effect at the top
-		g2d.setColor(new java.awt.Color(100, 100, 100)); // Dark gray hook/hanger
-		g2d.fillRect(7, 0, 2, 3);
-		
-		g2d.dispose();
+		// Load the custom icon (replace "panel_icon.png" with the actual filename)
+		BufferedImage icon;
+		try 
+		{
+			icon = ImageUtil.loadImageResource(getClass(), "/panel_icon.png");
+		}
+		catch (RuntimeException e)
+		{
+			log.warn("Could not load custom icon, falling back to default: {}", e.getMessage());
+			// Create a simple fallback icon if the custom image fails to load
+			icon = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
+			java.awt.Graphics2D g = icon.createGraphics();
+			g.setColor(java.awt.Color.BLUE);
+			g.fillOval(4, 4, 24, 24);
+			g.dispose();
+		}
 		
 		navButton = NavigationButton.builder()
 			.tooltip("Dry Rate Tracker")

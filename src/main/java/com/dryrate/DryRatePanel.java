@@ -323,68 +323,6 @@ public class DryRatePanel extends PluginPanel
         buttonPanel.add(fullResetButton);
         
         panel.add(buttonPanel);
-        
-        // Test buttons panel (for development/testing) - only show if config enabled
-        if (config != null && config.showTestButtons())
-        {
-            JPanel testPanel = new JPanel();
-            testPanel.setLayout(new BoxLayout(testPanel, BoxLayout.Y_AXIS));
-            testPanel.setBackground(bgColor);
-        
-        // Test completion button
-        JButton testCompletionButton = new JButton("Test Completion");
-        testCompletionButton.setPreferredSize(new Dimension(130, 20));
-        testCompletionButton.setMaximumSize(new Dimension(130, 20));
-        testCompletionButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        testCompletionButton.setBackground(new Color(50, 150, 50)); // Green
-        testCompletionButton.setForeground(Color.WHITE);
-        testCompletionButton.setFocusPainted(false);
-        testCompletionButton.setFont(new Font("SansSerif", Font.PLAIN, 10));
-        
-        testCompletionButton.addActionListener(e -> {
-            dryRateManager.testRaidCompletion(raidType);
-            updateDisplay();
-        });
-        
-        // Test unique button
-        JButton testUniqueButton = new JButton("Test Unique");
-        testUniqueButton.setPreferredSize(new Dimension(130, 20));
-        testUniqueButton.setMaximumSize(new Dimension(130, 20));
-        testUniqueButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        testUniqueButton.setBackground(new Color(150, 50, 150)); // Purple
-        testUniqueButton.setForeground(Color.WHITE);
-        testUniqueButton.setFocusPainted(false);
-        testUniqueButton.setFont(new Font("SansSerif", Font.PLAIN, 10));
-        
-        testUniqueButton.addActionListener(e -> {
-            dryRateManager.testUniqueReceived(raidType);
-            updateDisplay();
-        });
-        
-        // Test bulk button
-        JButton testBulkButton = new JButton("Test 50+5");
-        testBulkButton.setPreferredSize(new Dimension(130, 20));
-        testBulkButton.setMaximumSize(new Dimension(130, 20));
-        testBulkButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        testBulkButton.setBackground(new Color(50, 100, 150)); // Blue
-        testBulkButton.setForeground(Color.WHITE);
-        testBulkButton.setFocusPainted(false);
-        testBulkButton.setFont(new Font("SansSerif", Font.PLAIN, 10));
-        
-        testBulkButton.addActionListener(e -> {
-            dryRateManager.testMultipleCompletions(raidType, 50, 5);
-            updateDisplay();
-        });
-        
-            testPanel.add(Box.createVerticalStrut(3));
-            testPanel.add(testCompletionButton);
-            testPanel.add(Box.createVerticalStrut(2));
-            testPanel.add(testUniqueButton);
-            testPanel.add(Box.createVerticalStrut(2));
-            testPanel.add(testBulkButton);
-            
-            panel.add(testPanel);
-        }
 
         return panel;
     }

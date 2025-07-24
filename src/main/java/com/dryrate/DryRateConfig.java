@@ -67,17 +67,4 @@ public interface DryRateConfig extends Config
 	{
 		return false;
 	}
-
-	@ConfigItem(
-		keyName = "showTestButtons",
-		name = "Show test buttons",
-		description = "Show test buttons for development/testing (Test Completion, Test Unique, etc.)",
-		position = 5
-	)
-	default boolean showTestButtons()
-	{
-		return false;
-	}
-
-
 } 
